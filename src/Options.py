@@ -9,3 +9,4 @@ class Options:
 	stamina_prism = True
 	stamina_prism_one = True
 	install = False
+	folder = None

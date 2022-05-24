@@ -14,35 +14,44 @@ Created by Josh Jeppson on Friday, May 20, 2022
 def testStorm():
 	if args.install:
 		print("[INFO] Installing STORM", file=sys.stderr)
+		os.system('./installScripts/storm.sh')
 	print("[INFO] Testing against STORM", file=sys.stderr)
 
 def testPrism():
 	if args.install:
 		print("[INFO] Installing PRISM", file=sys.stderr)
+		os.system('./installScripts/prism.sh')
 	print("[INFO] Testing against PRISM", file=sys.stderr)
 
 def testStaminaStorm():
 	if args.install:
 		print("[INFO] Installing STAMINA-STORM", file=sys.stderr)
+		os.system('./installScripts/stamina.sh')
 	print("[INFO] Testing against STAMINA-STORM", file=sys.stderr)
 
 
 def testStaminaPrism():
 	if args.install:
 		print("[INFO] Installing STAMINA-PRISM", file=sys.stderr)
+		os.system('./installScripts/stamina_p.sh')
 	print("[INFO] Testing against STAMINA-PRISM", file=sys.stderr)
 
 
 def testStaminaOne():
 	if args.install:
 		print("[INFO] Installing STAMINA 1.0", file=sys.stderr)
+		os.system('./installScripts/stamina_p1.sh')
 	print("[INFO] Testing against STAMINA 1.0", file=sys.stderr)
 
 
 def processArgs(args):
+	if args.folder is None:
+		Options.folder = "../models"
+	else:
+		Options.folder = args.folder
 	if args.verbose:
 		print("[INFO] Processing arguments", file=sys.stderr)
-
+		print(f"[INFO] Model and properties file is found at {Options.folder}/model_and_properties")
 	Options.install = args.install
 	# Use the default values in Options
 	if args.all:
@@ -82,5 +91,6 @@ if __name__=='__main__':
 	parser.add_argument('--stamina_prism_one', help="Check model using the STAMINA 1.0 truncated model checker, integrated with PRISM", action="store_true")
 	parser.add_argument('--infamy', help="Check model using the INFAMY model checker", action="store_true")
 	parser.add_argument('-i', '--install', help="Installs the tools that are needed", action="store_true")
+	parser.add_argument('-f', '--folder', help="Folder where to find the file models_and_properties")
 	args = parser.parse_args()
 	processArgs(args)
