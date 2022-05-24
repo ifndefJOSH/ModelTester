@@ -3,6 +3,7 @@
 import sys
 import os
 import argparse
+import time
 
 from Options import Options
 '''
@@ -98,6 +99,7 @@ def processArgs(args):
 		testStaminaStorm()
 		testStaminaPrism()
 		testStaminaOne()
+		runTests()
 		return
 	Options.storm = args.storm
 	if Options.storm:
@@ -114,6 +116,39 @@ def processArgs(args):
 	Options.stamina_prism_one = args.stamina_prism_one
 	if Options.stamina_prism_one:
 		testStaminaOne()
+	runTests()
+
+def runTests():
+	try:
+		timeFile = open(f"{Options.output}_times.csv", 'w')
+		resultsFile = open(f"{Options.output}_results.csv", 'w')
+		with open(f"{Options.folder}/models_and_properties", 'r') as mps:
+			for line in mps:
+				if line.strip()[0] == '#':
+					continue
+				modelFile, propertiesFile = line.split(',')
+				modelFile = modelFile.strip()
+				propertiesFile = propertiesFile.strip()
+				if not propertiesFile.endswith('.csl'):
+					warn("Properties file may not be a CSL properties file.")
+				if (not modelFile.endswith('.prism')) and (not modelFile.endswith('.sm')):
+					warn("Modules file may not be a PRISM modules file.")
+				info(f"Testing line {modelFile} and {propertiesFile}")
+				for command in commands:
+					start = time.time()
+					info(f"Running command:\n\t{command}", True)
+					try:
+						retCode = os.system(f"export MODEL_FILE={modelFile} && export PROPERTIES_FILE={propertiesFile} && {command}")
+						if retCode != 0:
+							warn("Recieved non-zero exit code for command")
+					except Exception as e:
+						err("Unable to run command:\n\t{command}.\nGot error:\n\t{e}")
+					end = time.time()
+					print(f"Took time {end - start} s", file=sys.stderr)
+		timeFile.close()
+		resultsFile.close()
+	except Exception as e:
+		err(f"Caught exception when trying to test:\n\t{e}")
 
 if __name__=='__main__':
 	if len(sys.argv) == 1:
