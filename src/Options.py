@@ -10,3 +10,6 @@ class Options:
 	stamina_prism_one = True
 	install = False
 	folder = None
+	output = None
+	verbose = False
+	silent = False

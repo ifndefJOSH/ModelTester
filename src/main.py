@@ -11,47 +11,85 @@ Main file for automated model checker. References several other files within thi
 Created by Josh Jeppson on Friday, May 20, 2022
 '''
 
+RST = "\x1B[0m"
+BLU = "\x1B[34m"
+RED = "\x1B[31m"
+YEL = "\x1B[33m"
+BLD = "\x1B[1m"
+
+testTable = [
+			["Model File", "Properties File"]
+		]
+
+commands = []
+
+def info(msg, isVerbose=False):
+	if Options.silent or (isVerbose and not Options.verbose):
+		return
+	print(f"{BLD}{BLU}[INFO]:{RST} {msg}", file=sys.stderr)
+
+def warn(msg, isVerbose=False):
+	if Options.silent or (isVerbose and not Options.verbose):
+		return
+	print(f"{BLD}{YEL}[WARNING]:{RST} {msg}", file=sys.stderr)
+
+def err(msg, isVerbose=False, shouldExit=False, exitCode=1):
+	if Options.silent or (isVerbose and not Options.verbose):
+		return
+	print(f"{BLD}{RED}[ERROR]:{RST} {msg}", file=sys.stderr)
+	if shouldExit:
+		sys.exit(exitCode)
+
 def testStorm():
 	if args.install:
-		print("[INFO] Installing STORM", file=sys.stderr)
+		info("Installing STORM")
 		os.system('./installScripts/storm.sh')
-	print("[INFO] Testing against STORM", file=sys.stderr)
+	info("Adding the following model checker to the test suite: STORM")
+	testTable[0].append("STORM")
+	commands.append('storm --prism $MODEL_FILE --prop $PROPERTIES_FILE -pc')
 
 def testPrism():
 	if args.install:
-		print("[INFO] Installing PRISM", file=sys.stderr)
+		info("Installing PRISM")
 		os.system('./installScripts/prism.sh')
-	print("[INFO] Testing against PRISM", file=sys.stderr)
+	info("Adding the following model checker to the test suite: PRISM")
+	testTable[0].append("PRISM")
+	commands.append('prism $MODEL_FILE $PROPERTIES_FILE')
 
 def testStaminaStorm():
 	if args.install:
-		print("[INFO] Installing STAMINA-STORM", file=sys.stderr)
+		info("Installing STAMINA-STORM")
 		os.system('./installScripts/stamina.sh')
-	print("[INFO] Testing against STAMINA-STORM", file=sys.stderr)
-
+	info("Adding the following model checker to the test suite: STAMINA-STORM")
+	testTable[0].append("STAMINA/STORM")
+	commands.append('sstamina $MODEL_FILE $PROPERTIES_FILE')
 
 def testStaminaPrism():
 	if args.install:
-		print("[INFO] Installing STAMINA-PRISM", file=sys.stderr)
+		info("Installing STAMINA-PRISM")
 		os.system('./installScripts/stamina_p.sh')
-	print("[INFO] Testing against STAMINA-PRISM", file=sys.stderr)
+	info("Adding the following model checker to the test suite: STAMINA-PRISM")
+	testTable[0].append("STAMINA/PRISM")
+	commands.append('pstamina $MODEL_FILE $PROPERTIES_FILE')
 
 
 def testStaminaOne():
 	if args.install:
-		print("[INFO] Installing STAMINA 1.0", file=sys.stderr)
+		info("Installing STAMINA 1.0")
 		os.system('./installScripts/stamina_p1.sh')
-	print("[INFO] Testing against STAMINA 1.0", file=sys.stderr)
+	info("Adding the following model checker to the test suite: STAMINA 1.0")
+	testTable[0].append("STAMINA/PRISM 1.0")
+	commands.append('stamina-v1 $MODEL_FILE $PROPERTIES_FILE')
 
 
 def processArgs(args):
-	if args.folder is None:
-		Options.folder = "../models"
-	else:
-		Options.folder = args.folder
-	if args.verbose:
-		print("[INFO] Processing arguments", file=sys.stderr)
-		print(f"[INFO] Model and properties file is found at {Options.folder}/model_and_properties")
+	Options.folder = args.folder if args.folder is not None else "../models"
+	Options.output = args.output if args.output is not None else "out"
+	Options.silent = args.silent
+	Options.verbose = args.verbose
+	info("Processing arguments", True)
+	info(f"Model and properties file is found at {Options.folder}/model_and_properties", True)
+	info(f"Will write to output {Options.output}_times.csv and {Options.output}_results.csv", True)
 	Options.install = args.install
 	# Use the default values in Options
 	if args.all:
@@ -92,5 +130,7 @@ if __name__=='__main__':
 	parser.add_argument('--infamy', help="Check model using the INFAMY model checker", action="store_true")
 	parser.add_argument('-i', '--install', help="Installs the tools that are needed", action="store_true")
 	parser.add_argument('-f', '--folder', help="Folder where to find the file models_and_properties")
+	parser.add_argument('-o', '--output', help="File to output results to. Will be suffixed with _times.csv and _results.csv (default output)")
+	parser.add_argument('-s', '--silent', help="Emit no output", action="store_true")
 	args = parser.parse_args()
 	processArgs(args)
