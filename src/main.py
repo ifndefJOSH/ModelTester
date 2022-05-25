@@ -4,6 +4,7 @@ import sys
 import os
 import argparse
 import time
+import subprocess
 
 from Options import Options
 '''
@@ -25,7 +26,7 @@ testTable = [
 commands = []
 
 # The line that the results string starts with
-resultString = []
+resultsString = []
 
 def info(msg, isVerbose=False):
 	if Options.silent or (isVerbose and not Options.verbose):
@@ -51,7 +52,7 @@ def testStorm():
 	info("Adding the following model checker to the test suite: STORM")
 	testTable[0].append("STORM")
 	commands.append('storm --prism $MODEL_FILE --prop $PROPERTIES_FILE -pc')
-	err("STORM does not support infinite state space!", True)
+	err("STORM does not support infinite state space!", shouldExit=True)
 
 def testPrism():
 	if args.install:
@@ -60,7 +61,7 @@ def testPrism():
 	info("Adding the following model checker to the test suite: PRISM")
 	testTable[0].append("PRISM")
 	commands.append('prism $MODEL_FILE $PROPERTIES_FILE')
-	err("PRISM does not support infinite state space truncation!", True)
+	err("PRISM does not support infinite state space truncation!", shouldExit=True)
 
 def testStaminaStorm():
 	if args.install:
@@ -170,7 +171,7 @@ def runTests():
 						if retCode != 0:
 							warn("Recieved non-zero exit code for command")
 					except Exception as e:
-						err("Unable to run command:\n\t{command}.\nGot error:\n\t{e}")
+						err(f"Unable to run command:\n\t{command}.\nGot error:\n\t{e}")
 					end = time.time()
 					timeFile.write(f"{end - start}")
 					print(f"Took time {end - start} s", file=sys.stderr)
