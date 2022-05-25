@@ -24,6 +24,9 @@ testTable = [
 
 commands = []
 
+# The line that the results string starts with
+resultString = []
+
 def info(msg, isVerbose=False):
 	if Options.silent or (isVerbose and not Options.verbose):
 		return
@@ -48,6 +51,7 @@ def testStorm():
 	info("Adding the following model checker to the test suite: STORM")
 	testTable[0].append("STORM")
 	commands.append('storm --prism $MODEL_FILE --prop $PROPERTIES_FILE -pc')
+	err("STORM does not support infinite state space!", True)
 
 def testPrism():
 	if args.install:
@@ -56,6 +60,7 @@ def testPrism():
 	info("Adding the following model checker to the test suite: PRISM")
 	testTable[0].append("PRISM")
 	commands.append('prism $MODEL_FILE $PROPERTIES_FILE')
+	err("PRISM does not support infinite state space truncation!", True)
 
 def testStaminaStorm():
 	if args.install:
@@ -64,6 +69,9 @@ def testStaminaStorm():
 	info("Adding the following model checker to the test suite: STAMINA-STORM")
 	testTable[0].append("STAMINA/STORM")
 	commands.append('sstamina $MODEL_FILE $PROPERTIES_FILE')
+	resultsString.append(
+		{"min":"Probability Minimum:", "max":"Probability Maximum"
+	)
 
 def testStaminaPrism():
 	if args.install:
@@ -72,6 +80,9 @@ def testStaminaPrism():
 	info("Adding the following model checker to the test suite: STAMINA-PRISM")
 	testTable[0].append("STAMINA/PRISM")
 	commands.append('pstamina $MODEL_FILE $PROPERTIES_FILE')
+	resultsString.append(
+		{"min":"ProbMin:", "max":"ProbMax"}
+	)
 
 
 def testStaminaOne():
@@ -81,6 +92,9 @@ def testStaminaOne():
 	info("Adding the following model checker to the test suite: STAMINA 1.0")
 	testTable[0].append("STAMINA/PRISM 1.0")
 	commands.append('stamina-v1 $MODEL_FILE $PROPERTIES_FILE')
+	resultsString.append(
+		{"min":"ProbMin:", "max":"ProbMax"}
+	)
 
 
 def processArgs(args):
@@ -134,17 +148,33 @@ def runTests():
 				if (not modelFile.endswith('.prism')) and (not modelFile.endswith('.sm')):
 					warn("Modules file may not be a PRISM modules file.")
 				info(f"Testing line {modelFile} and {propertiesFile}")
+				i = 0
 				for command in commands:
 					start = time.time()
 					info(f"Running command:\n\t{command}", True)
 					try:
-						retCode = os.system(f"export MODEL_FILE={modelFile} && export PROPERTIES_FILE={propertiesFile} && {command}")
+						currentCommand = command.replace("$MODEL_FILE", modelFile)
+						currentCommand = currentCommand.replace("$PROPERTIES_FILE", propertiesFile)
+						completedProcess = subprocess.run(currentCommand.split(' '), capture_output=True)
+						retCode = completedProcess.returncode
+						# retCode = os.system(f"export MODEL_FILE={modelFile} && export PROPERTIES_FILE={propertiesFile} && {command}")
+						# Get the results
+						pMin = None
+						pMax = None
+						outStream = completedProcess.stderr if command.startswith("sstamina") else completedProcess.stdout
+						for line in outStream.split('\n'):
+							if resultsString[i]["min"] in line:
+								pMin = float(line.strip().replace(resultsString[i]["min"], ""))
+							elif resultsString[i]["max"] in line:
+								pMax = float(line.strip().replace(resultsString[i]["max"], ""))
 						if retCode != 0:
 							warn("Recieved non-zero exit code for command")
 					except Exception as e:
 						err("Unable to run command:\n\t{command}.\nGot error:\n\t{e}")
 					end = time.time()
+					timeFile.write(f"{end - start}")
 					print(f"Took time {end - start} s", file=sys.stderr)
+					i += 1
 		timeFile.close()
 		resultsFile.close()
 	except Exception as e:
