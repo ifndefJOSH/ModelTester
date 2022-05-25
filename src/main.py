@@ -70,7 +70,7 @@ def testStaminaStorm():
 	testTable[0].append("STAMINA/STORM")
 	commands.append('sstamina $MODEL_FILE $PROPERTIES_FILE')
 	resultsString.append(
-		{"min":"Probability Minimum:", "max":"Probability Maximum"
+		{"min":"Probability Minimum:", "max":"Probability Maximum"}
 	)
 
 def testStaminaPrism():
